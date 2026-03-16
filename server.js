@@ -227,30 +227,46 @@ function executeRequest(item, callback) {
     const testName = item.name || 'Unnamed Test';
     const method = request.method || 'GET';
     
-    // Parse URL
+    // Parse URL safely
     let url = '';
-    if (typeof request.url === 'string') {
-        url = request.url;
-    } else if (typeof request.url === 'object') {
-        const protocol = request.url.protocol || 'https';
-        const host = Array.isArray(request.url.host) ? request.url.host.join('.') : request.url.host;
-        const pathStr = Array.isArray(request.url.path) ? '/' + request.url.path.join('/') : '';
-        url = `${protocol}://${host}${pathStr}`;
-    }
-    
-    // Handle body data
-    let bodyData = null;
-    if (request.body && request.body.mode === 'urlencoded' && request.body.urlencoded) {
-        const params = new URLSearchParams();
-        request.body.urlencoded.forEach(param => {
-            params.append(param.key, param.value);
-        });
-        bodyData = params.toString();
-    }
-    
-    // Make request
     try {
+        if (typeof request.url === 'string') {
+            url = request.url;
+        } else if (typeof request.url === 'object') {
+            // Extract and clean protocol
+            let protocol = request.url.protocol || 'https';
+            // Remove newlines and invalid characters
+            protocol = protocol.split('\n')[0].split(':')[0].trim();
+            if (!protocol.endsWith(':')) protocol += ':';
+            
+            // Extract host
+            const host = Array.isArray(request.url.host) ? 
+                request.url.host.join('.') : 
+                request.url.host;
+            
+            // Extract path
+            const pathStr = Array.isArray(request.url.path) ? 
+                '/' + request.url.path.join('/') : 
+                '';
+            
+            url = `${protocol}//${host}${pathStr}`;
+        }
+        
+        // Final URL cleanup
+        url = url.replace(/[\r\n\t]/g, '').trim();
+        
         const urlObj = new URL(url);
+        
+        // Handle body data
+        let bodyData = null;
+        if (request.body && request.body.mode === 'urlencoded' && request.body.urlencoded) {
+            const params = new URLSearchParams();
+            request.body.urlencoded.forEach(param => {
+                params.append(param.key, param.value);
+            });
+            bodyData = params.toString();
+        }
+        
         const options = {
             hostname: urlObj.hostname,
             port: urlObj.port,
@@ -285,7 +301,7 @@ function executeRequest(item, callback) {
                         parsedResponse = JSON.parse(responseData);
                     } catch (e) {
                         // If JSON parsing fails, use raw response
-                        parsedResponse = responseData.substring(0, 200); // First 200 chars
+                        parsedResponse = responseData.substring(0, 200);
                     }
                 } else {
                     parsedResponse = '(Empty response)';
@@ -336,7 +352,7 @@ function executeRequest(item, callback) {
         callback({
             name: testName,
             method: method,
-            url: url,
+            url: url || 'Invalid URL',
             statusCode: 0,
             success: false,
             response: `Error: ${err.message}`
