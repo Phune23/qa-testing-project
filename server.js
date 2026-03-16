@@ -277,26 +277,30 @@ function executeRequest(item, callback) {
             });
             
             httpRes.on('end', () => {
-                try {
-                    const parsedResponse = JSON.parse(responseData);
-                    callback({
-                        name: testName,
-                        method: method,
-                        url: url,
-                        statusCode: httpRes.statusCode,
-                        success: httpRes.statusCode >= 200 && httpRes.statusCode < 300,
-                        response: parsedResponse
-                    });
-                } catch (e) {
-                    callback({
-                        name: testName,
-                        method: method,
-                        url: url,
-                        statusCode: httpRes.statusCode,
-                        success: httpRes.statusCode >= 200 && httpRes.statusCode < 300,
-                        response: responseData
-                    });
+                let parsedResponse = null;
+                
+                // Try to parse JSON, handle non-JSON responses
+                if (responseData) {
+                    try {
+                        parsedResponse = JSON.parse(responseData);
+                    } catch (e) {
+                        // If JSON parsing fails, use raw response
+                        parsedResponse = responseData.substring(0, 200); // First 200 chars
+                    }
+                } else {
+                    parsedResponse = '(Empty response)';
                 }
+                
+                const isSuccess = httpRes.statusCode >= 200 && httpRes.statusCode < 300;
+                
+                callback({
+                    name: testName,
+                    method: method,
+                    url: url,
+                    statusCode: httpRes.statusCode,
+                    success: isSuccess,
+                    response: parsedResponse
+                });
             });
         });
         
@@ -307,7 +311,7 @@ function executeRequest(item, callback) {
                 url: url,
                 statusCode: 0,
                 success: false,
-                response: error.message
+                response: `Error: ${error.message}`
             });
         });
         
@@ -319,7 +323,7 @@ function executeRequest(item, callback) {
                 url: url,
                 statusCode: 0,
                 success: false,
-                response: 'Request timeout'
+                response: 'Request timeout (> 10s)'
             });
         });
         
@@ -335,7 +339,7 @@ function executeRequest(item, callback) {
             url: url,
             statusCode: 0,
             success: false,
-            response: err.message
+            response: `Error: ${err.message}`
         });
     }
 }
