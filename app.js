@@ -165,6 +165,73 @@ function clearContent() {
   document.getElementById("testOutput").innerText = "";
 }
 
+function runAPITests() {
+  clearContent();
+  
+  document.getElementById("title").innerText = "API TESTS";
+
+  const output = document.getElementById("testOutput");
+
+  output.innerText = "🔄 Thực hiện API Tests... Vui lòng đợi...";
+
+  const isProduction = window.location.hostname !== 'localhost';
+  const apiUrl = isProduction ? 
+    `${window.location.origin}/run-api-tests` : 
+    'http://localhost:3000/run-api-tests';
+
+  fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    let result = `═══════════════════════════════════════
+  API TESTS EXECUTION
+═══════════════════════════════════════\n`;
+
+    if (data.results && data.results.length > 0) {
+      data.results.forEach((test, index) => {
+        const status = test.success ? '✓ PASS' : '✗ FAIL';
+        result += `\n[Test ${index + 1}] ${test.name} - ${status}
+Method: ${test.method}
+URL: ${test.url}
+Status Code: ${test.statusCode || 'N/A'}
+Response: ${test.response ? JSON.stringify(test.response).substring(0, 100) + '...' : 'N/A'}
+─────────────────────────────────────\n`;
+      });
+    }
+
+    const passCount = data.results ? data.results.filter(t => t.success).length : 0;
+    const totalCount = data.results ? data.results.length : 0;
+    const status = data.success ? '✓ ALL PASSED' : '⚠ SOME FAILED';
+
+    result += `\n═══════════════════════════════════════
+Result: ${status}
+Pass: ${passCount}/${totalCount}
+═══════════════════════════════════════
+Message: ${data.message}
+Timestamp: ${new Date().toLocaleString()}
+===================================================`;
+
+    output.innerText = result;
+  })
+  .catch(error => {
+    output.innerText = `═══════════════════════════════════════
+  ❌ API TEST ERROR
+═══════════════════════════════════════
+
+Error: ${error.message}
+
+Vui lòng check:
+- Server đang chạy không?
+- Refresh trang nếu cần
+
+═══════════════════════════════════════`;
+  });
+}
+
 function checkServerHealth() {
   const isProduction = window.location.hostname !== 'localhost';
   const healthUrl = isProduction ? 

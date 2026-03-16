@@ -2,6 +2,8 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const https = require('https');
+const querystring = require('querystring');
 
 const PORT = process.env.PORT || 3000;
 
@@ -28,6 +30,12 @@ const server = http.createServer((req, res) => {
     if (req.url === '/health' && req.method === 'GET') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'ok' }));
+        return;
+    }
+
+    // Run API tests endpoint
+    if (req.url === '/run-api-tests' && req.method === 'POST') {
+        runAPITests(res);
         return;
     }
 
@@ -159,3 +167,175 @@ server.listen(PORT, () => {
     console.log(`QA Testing Dashboard running at http://localhost:${PORT}`);
     console.log(`Press Ctrl+C to stop the server`);
 });
+
+function runAPITests(res) {
+    const collectionPath = path.join(__dirname, 'api-testing', 'qa-testing-project-phune23.postman_collection.json');
+    
+    let results = [];
+    
+    try {
+        const collectionData = fs.readFileSync(collectionPath, 'utf8');
+        const collection = JSON.parse(collectionData);
+        
+        // Lấy tất cả requests từ collection
+        const requests = collection.item || [];
+        
+        // Chạy từng request
+        let completed = 0;
+        
+        requests.forEach((item, index) => {
+            if (item.request) {
+                executeRequest(item, (result) => {
+                    results.push(result);
+                    completed++;
+                    
+                    // Khi hoàn thành tất cả, gửi response
+                    if (completed === requests.length) {
+                        const allPassed = results.every(r => r.success);
+                        res.writeHead(200, { 'Content-Type': 'application/json' });
+                        res.end(JSON.stringify({
+                            success: allPassed,
+                            results: results,
+                            message: allPassed ? 'All API tests passed' : 'Some API tests failed'
+                        }));
+                    }
+                });
+            }
+        });
+        
+        // Nếu không có requests
+        if (requests.length === 0) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                success: false,
+                results: [],
+                message: 'No API tests found in collection'
+            }));
+        }
+    } catch (err) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+            success: false,
+            results: [],
+            message: `Error reading collection: ${err.message}`
+        }));
+    }
+}
+
+function executeRequest(item, callback) {
+    const request = item.request;
+    const testName = item.name || 'Unnamed Test';
+    const method = request.method || 'GET';
+    
+    // Parse URL
+    let url = '';
+    if (typeof request.url === 'string') {
+        url = request.url;
+    } else if (typeof request.url === 'object') {
+        const protocol = request.url.protocol || 'https';
+        const host = Array.isArray(request.url.host) ? request.url.host.join('.') : request.url.host;
+        const pathStr = Array.isArray(request.url.path) ? '/' + request.url.path.join('/') : '';
+        url = `${protocol}://${host}${pathStr}`;
+    }
+    
+    // Handle body data
+    let bodyData = null;
+    if (request.body && request.body.mode === 'urlencoded' && request.body.urlencoded) {
+        const params = new URLSearchParams();
+        request.body.urlencoded.forEach(param => {
+            params.append(param.key, param.value);
+        });
+        bodyData = params.toString();
+    }
+    
+    // Make request
+    try {
+        const urlObj = new URL(url);
+        const options = {
+            hostname: urlObj.hostname,
+            port: urlObj.port,
+            path: urlObj.pathname + urlObj.search,
+            method: method,
+            headers: {
+                'User-Agent': 'QA-Testing-Dashboard',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            timeout: 10000
+        };
+        
+        if (bodyData) {
+            options.headers['Content-Length'] = Buffer.byteLength(bodyData);
+        }
+        
+        const protocol = urlObj.protocol === 'https:' ? https : require('http');
+        
+        const req = protocol.request(options, (httpRes) => {
+            let responseData = '';
+            
+            httpRes.on('data', (chunk) => {
+                responseData += chunk;
+            });
+            
+            httpRes.on('end', () => {
+                try {
+                    const parsedResponse = JSON.parse(responseData);
+                    callback({
+                        name: testName,
+                        method: method,
+                        url: url,
+                        statusCode: httpRes.statusCode,
+                        success: httpRes.statusCode >= 200 && httpRes.statusCode < 300,
+                        response: parsedResponse
+                    });
+                } catch (e) {
+                    callback({
+                        name: testName,
+                        method: method,
+                        url: url,
+                        statusCode: httpRes.statusCode,
+                        success: httpRes.statusCode >= 200 && httpRes.statusCode < 300,
+                        response: responseData
+                    });
+                }
+            });
+        });
+        
+        req.on('error', (error) => {
+            callback({
+                name: testName,
+                method: method,
+                url: url,
+                statusCode: 0,
+                success: false,
+                response: error.message
+            });
+        });
+        
+        req.on('timeout', () => {
+            req.destroy();
+            callback({
+                name: testName,
+                method: method,
+                url: url,
+                statusCode: 0,
+                success: false,
+                response: 'Request timeout'
+            });
+        });
+        
+        if (bodyData) {
+            req.write(bodyData);
+        }
+        
+        req.end();
+    } catch (err) {
+        callback({
+            name: testName,
+            method: method,
+            url: url,
+            statusCode: 0,
+            success: false,
+            response: err.message
+        });
+    }
+}
