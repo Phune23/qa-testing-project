@@ -1,0 +1,17 @@
+{
+  "name": "selenium-tests",
+  "version": "1.0.0",
+  "description": "Tools:\r - Selenium\r - JavaScript\r - ChromeDriver",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "chromedriver": "^146.0.3",
+    "selenium-webdriver": "^4.41.0"
+  }
+}

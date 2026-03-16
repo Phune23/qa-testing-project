@@ -1,0 +1,67 @@
+{
+  "info": {
+    "_postman_id": "7392b439-ec6e-45ce-a684-b20e1d39e2d1",
+    "name": "qa-testing-project-phune23",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "39556155"
+  },
+  "item": [
+    {
+      "name": "Login API Test",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "test@test.com",
+              "type": "text",
+              "uuid": "8b703702-c970-414a-8de1-225587cdede4"
+            },
+            {
+              "key": "password",
+              "value": "123456",
+              "type": "text",
+              "uuid": "b421441d-9c50-4dd4-93e6-328442e6d5e2"
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://automationexercise.com/api/verifyLogin",
+          "protocol": "https",
+          "host": [
+            "automationexercise",
+            "com"
+          ],
+          "path": [
+            "api",
+            "verifyLogin"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "Method: GET\nURL: https://automationexercise.com/api/productsList",
+          "protocol": "Method: GET\nURL: https",
+          "host": [
+            "automationexercise",
+            "com"
+          ],
+          "path": [
+            "api",
+            "productsList"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
