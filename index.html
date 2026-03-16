@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>QA Testing Dashboard</title>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* header */
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 600;
+        }
+
+        /* layout */
+        .main {
+            display: flex;
+            flex: 1;
+        }
+
+        /* sidebar */
+        .sidebar {
+            width: 240px;
+            background: #ecf0f1;
+            padding: 20px;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        /* buttons */
+        .sidebar button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            background-color: white;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            color: #2c3e50;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar button:hover {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+            transform: translateX(2px);
+        }
+
+        .sidebar button:active {
+            transform: translateX(0);
+        }
+
+        /* content */
+        .content {
+            flex: 1;
+            padding: 30px;
+            background: white;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #title {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+
+        /* table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        table th {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        table tr:hover {
+            background-color: #e8f4f8;
+        }
+
+        table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        /* footer */
+        .footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 0.9em;
+        }
+
+        /* markdown content */
+        #markdown h1, #markdown h2, #markdown h3 {
+            color: #2c3e50;
+            border-bottom: 1px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        #markdown a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        #markdown a:hover {
+            text-decoration: underline;
+        }
+
+        /* test output */
+        #testOutput {
+            background-color: #f5f5f5;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main {
+                flex-direction: column;
+                flex: 1;
+            }
+
+            .sidebar {
+                width: 100%;
+                padding: 15px;
+                border-bottom: 2px solid #bdc3c7;
+                flex-shrink: 0;
+            }
+
+            .sidebar h3 {
+                margin: 0 0 15px 0;
+            }
+
+            .sidebar button {
+                padding: 12px;
+                font-size: 0.95em;
+                margin-bottom: 10px;
+            }
+
+            .content {
+                padding: 15px;
+                flex: 1;
+            }
+
+            #title {
+                font-size: 1.3em;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            table th, table td {
+                padding: 8px;
+            }
+
+            #markdown {
+                font-size: 0.95em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 14px;
+            }
+
+            .header {
+                padding: 15px 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 10px;
+            }
+
+            .sidebar button {
+                padding: 10px;
+                font-size: 0.9em;
+            }
+
+            table {
+                font-size: 0.8em;
+            }
+
+            table th, table td {
+                padding: 6px;
+            }
+
+            #markdown {
+                font-size: 0.9em;
+            }
+
+            #testOutput {
+                padding: 10px;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>QA Testing Dashboard</h1>
+    </header>
+
+    <main class="main">
+        <div class="sidebar">
+
+            <h3>QA Documents</h3>
+
+            <button onclick="loadExcel('api-testing/api-test-cases.xlsx')">
+                API Testing
+            </button>
+
+            <button onclick="loadMarkdown('automation-test/README.md')">
+                Automation Test
+            </button>
+
+            <button onclick="loadExcel('bug-report/bug-report.xlsx')">
+                Bug Report
+            </button>
+
+            <button onclick="loadMarkdown('requirement-analysis/requirement-analysis.md')">
+                Requirement Analysis
+            </button>
+
+            <button onclick="loadExcel('requirement-analysis/rtm.xlsx')">
+                RTM
+            </button>
+
+            <button onclick="loadExcel('test-cases/test-cases.xlsx')">
+                Test Cases
+            </button>
+
+            <button onclick="loadExcel('test-execution/test-execution-report.xlsx')">
+                Test Execution
+            </button>
+
+            <button onclick="loadMarkdown('test-plan/test-plan.md')">
+                Test Plan
+            </button>
+
+            <button onclick="loadMarkdown('test-plan/test-strategy.md')">
+                Test Strategy
+            </button>
+
+            <button onclick="loadMarkdown('test-report/test-summary-report.md')">
+                Test Report
+            </button>
+
+            <button onclick="loadExcel('test-scenarios/test-scenarios.xlsx')">
+                Test Scenarios
+            </button>
+
+            <button onclick="loadExcel('unit-test/unit-test-cases.xlsx')">
+                Unit Test
+            </button>
+
+            <button onclick="loadMarkdown('user-document/user-guide.md')">
+                User Guide
+            </button>
+
+            <button onclick="runTest()">
+                Run Selenium Login Test
+            </button>
+        </div>
+
+        <div class="content" id="content">
+
+            <h2 id="title">Select a document</h2>
+
+            <div id="markdown"></div>
+            <div id="table"></div>
+            <pre id="testOutput"></pre>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 phune23</p>
+    </footer>
+
+    <script src="app.js"></script>
+
+</body>
+
+</html>
