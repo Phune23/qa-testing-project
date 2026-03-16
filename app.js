@@ -129,8 +129,10 @@ Retry tự động trong 30 giây...`;
         }
 
         const status = data.success ? '✓ PASS' : '✗ FAIL';
+        const mode = data.message.includes('Mock') ? '(📋 MOCK MODE - Demo)' : '(🔴 REAL TEST)';
+        
         result += `\n═══════════════════════════════════════
-Result: ${status}
+Result: ${status} ${mode}
 ═══════════════════════════════════════
 Message: ${data.message}
 Timestamp: ${new Date().toLocaleString()}
