@@ -16,13 +16,13 @@
           "urlencoded": [
             {
               "key": "email",
-              "value": "test@test.com",
+              "value": "phutranbs23@gmail.com",
               "type": "text",
               "uuid": "8b703702-c970-414a-8de1-225587cdede4"
             },
             {
               "key": "password",
-              "value": "123456",
+              "value": "123123",
               "type": "text",
               "uuid": "b421441d-9c50-4dd4-93e6-328442e6d5e2"
             }
